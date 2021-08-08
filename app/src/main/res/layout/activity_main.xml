@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+    tools:context=".MainActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_horizontal">
+
+        <Button
+            android:id="@+id/btn_listen"
+            android:layout_width="130dp"
+            android:layout_height="wrap_content"
+            android:text="Listen"
+            android:layout_margin="7dp"/>
+
+        <Button
+            android:id="@+id/btn_device"
+            android:layout_width="130dp"
+            android:layout_height="wrap_content"
+            android:text="device"
+            android:layout_margin="7dp"/>
+
+        <TextView
+            android:id="@+id/tv_status"
+            android:layout_width="70dp"
+            android:layout_height="30dp"
+            android:text="text"
+            android:textStyle="bold"
+            android:textSize="17sp"
+            android:layout_margin="7dp"/>
+
+    </LinearLayout>
+
+    <ListView
+        android:id="@+id/lv_pairedDevices"
+        android:layout_width="match_parent"
+        android:layout_height="194dp" />
+
+    <TextView
+        android:id="@+id/tv_inputDataExhibition"
+        android:layout_width="match_parent"
+        android:layout_height="150dp"
+        android:text="test"
+        android:textSize="50sp"
+        android:gravity="center"
+        android:textStyle="bold"
+        android:textColor="@color/teal_200"/>
+
+    <RadioGroup
+        android:id="@+id/rg_modeSelection"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:checkedButton="@id/rb_HR">
+
+        <RadioButton
+            android:id="@+id/rb_HR"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Heart rate mode"
+            android:textSize="20sp"
+            android:textStyle="italic"/>
+
+        <RadioButton
+            android:id="@+id/rb_SPO2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Blood oxygen mode"
+            android:textSize="20sp"
+            android:textStyle="italic"/>
+    </RadioGroup>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <Button
+            android:id="@+id/btn_finish"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="finish"
+            android:layout_margin="7dp"/>
+
+        <Button
+            android:id="@+id/btn_start"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="start"
+            android:layout_margin="7dp"/>
+
+    </LinearLayout>
+
+</LinearLayout>
