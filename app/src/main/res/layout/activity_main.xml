@@ -32,9 +32,11 @@
             android:id="@+id/tv_status"
             android:layout_width="70dp"
             android:layout_height="30dp"
-            android:text="text"
+            android:text="Status"
+            android:padding="5dp"
+            android:gravity="center"
             android:textStyle="bold"
-            android:textSize="17sp"
+            android:textSize="14sp"
             android:layout_margin="7dp"/>
 
     </LinearLayout>
@@ -42,17 +44,23 @@
     <ListView
         android:id="@+id/lv_pairedDevices"
         android:layout_width="match_parent"
-        android:layout_height="194dp" />
+        android:layout_height="130dp"
+        android:background="@color/white"/>
 
     <TextView
         android:id="@+id/tv_inputDataExhibition"
         android:layout_width="match_parent"
-        android:layout_height="150dp"
-        android:text="test"
-        android:textSize="50sp"
+        android:layout_height="120dp"
         android:gravity="center"
-        android:textStyle="bold"
-        android:textColor="@color/teal_200"/>
+        android:text="test"
+        android:textColor="@color/teal_200"
+        android:textSize="30sp"
+        android:textStyle="bold" />
+
+    <com.jjoe64.graphview.GraphView
+        android:id="@+id/graph"
+        android:layout_width="match_parent"
+        android:layout_height="242dp" />
 
     <RadioGroup
         android:id="@+id/rg_modeSelection"
