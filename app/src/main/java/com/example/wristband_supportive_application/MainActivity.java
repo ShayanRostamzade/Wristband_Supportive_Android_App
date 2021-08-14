@@ -216,40 +216,8 @@ public class MainActivity extends AppCompatActivity {
                     byte[] readBuff = (byte[]) msg.obj;
                     String tempMsg = new String(readBuff, 0, msg.arg1);
                     // todo: if data is more than 45 then ...
-                    char[] temp = new char[tempMsg.length()];
-                    char first = 0;
-                    char third = 0;
-                    char fourth = 0;
-                    for (int i = 0; i < tempMsg.length(); i++) {
-                        temp[i] = tempMsg.charAt(i);
-                        if(i == 0)
-                            first = temp[i];
-                        if(i == 2)
-                            third = temp[i];
-                        if(i == 3)
-                            fourth = temp[i];
-                    }
-                    if(first == third){
-                        char[] trimmed2 = new char[2];
-                        for(int i = 0; i < 2; i++){
-                            trimmed2[i] = temp[i];
-                        }
-                        tempMsg = String.valueOf(trimmed2);
-                    }
-                    else if(first == fourth){
-                        char[] trimmed3 = new char[3];
-                        tempMsg = String.valueOf(trimmed3);
-                        for(int i = 0; i < 3; i++){
-                            trimmed3[i] = temp[i];
-                        }
-                    }
-
-
-//                    String _msgInt = (String) msg.obj;
-//                    String tempMsg = String.valueOf(_msgInt);
                     try{
                         int _msgInt = Integer.parseInt(tempMsg);
-//                        int _msgInt = ByteBuffer.wrap(readBuff).getShort();
                         if(countDigit(_msgInt) >= 2){
                             tvData.setText(tempMsg);
 
@@ -263,7 +231,7 @@ public class MainActivity extends AppCompatActivity {
                             series.appendData(new DataPoint(pointsPlotted, _msgInt), true, pointsPlotted);
                             viewport.setMaxX(pointsPlotted);
                             viewport.setMaxY(200);
-                            // removing the last 200 points from the chart
+                            // removing the last 100 points from the chart
                             viewport.setMinX(pointsPlotted - 100);
                             Log.e(TAG, "m_data: " + _msgInt);
                         }
@@ -383,18 +351,18 @@ public class MainActivity extends AppCompatActivity {
 
         public void run()
         {
-            byte[] buffer = new byte[16];
+            byte[] buffer = new byte[3];
             int bytes = 0;
 //            DataInputStream dataInputStream = new DataInputStream(inputStream);
 //            String data;
 //            int dataLength;
 
-            while (bytes != -1)
+            while (true)
             {
                 try {
                     if(connectionFlag){
 //                        data = dataInputStream.readUTF();
-                        bytes = inputStream.read(buffer, 0, 6);
+                        bytes = inputStream.read(buffer);
                         handler.obtainMessage(STATE_MESSAGE_RECEIVED, bytes, -1, buffer).sendToTarget();
                     }
                 } catch (IOException e) {
