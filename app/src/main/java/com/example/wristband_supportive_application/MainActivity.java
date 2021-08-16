@@ -1,18 +1,24 @@
 package com.example.wristband_supportive_application;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
+import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.nfc.Tag;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
@@ -21,31 +27,43 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.Viewport;
 import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.LineGraphSeries;
 
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.Set;
 import java.util.UUID;
-
-import java.nio.ByteBuffer;
 
 public class MainActivity extends AppCompatActivity {
 
     //todo: change the UI
-    //todo: stop plotting when the finish button is pressed
     //todo: stop the plotting when the danger zone has been entered
     private static final String TAG = "MyApp";
 
-    Button btnListen, btnDevice, btnStart, btnFinish;
+    // handling the location services
+    FusedLocationProviderClient fusedLocationProviderClient;
+    // location request is a config file to work with fusedLocationProviderClient
+    LocationRequest locationRequest;
+
+    private static final int GPS_INTERVAL = 5000;
+    private static final int GPS_LOCATION_PER = 99;
+
+    // predefined values for natural oxygen and heart rate values
+    // for individuals around 60 years of age
+    private int spo2MIN = 95;
+    private int hrMIN = 70;
+    private int spo2MAX = 100;
+    private int hrMAX = 115;
+
+    Button btnListen, btnDevice, btnStart, btnFinish, btnGPS;
     TextView tvStatus, tvData;
     ListView lvPairedDevices;
     RadioGroup rgModeSelection;
@@ -57,6 +75,15 @@ public class MainActivity extends AppCompatActivity {
     SendReceive sendReceive;
 
     Boolean connectionFlag = false;
+
+    // selected mode from HR and SPO2 ('h' for HR and 's' for SPO2)
+    // default set to HR
+    char selectedMode = 'h';
+
+    // the number of samples to gather when user enters the perilous zone
+    int maxSampleCheck = 20;
+    int dangerZoneDataSum = 0;
+    int dangerZoneDataCnt = 0;
 
     static final int STATE_LISTENING = 1;
     static final int STATE_CONNECTING=2;
@@ -76,9 +103,6 @@ public class MainActivity extends AppCompatActivity {
     private int pointsPlotted = 5;
 
     private Viewport viewport;
-
-    // the amount of time between showing the
-    private int graphIntervalCounter = 0;
 
     // the y coordinate is the HR or SPO2 values
     LineGraphSeries<DataPoint> series = new LineGraphSeries<DataPoint>(new DataPoint[] {
@@ -117,6 +141,61 @@ public class MainActivity extends AppCompatActivity {
         viewport.setYAxisBoundsManual(true);
         graph.addSeries(series);
 
+        // setting the properties of LocationRequest
+        locationRequest = new LocationRequest();
+        // refreshing the location every 5 seconds
+        locationRequest.setFastestInterval(GPS_INTERVAL);
+        locationRequest.setPriority(locationRequest.PRIORITY_HIGH_ACCURACY);
+        //updateGPS();
+
+    } // end of onCreate method
+
+    // after permissions have been granted, this functions is triggered
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        switch (requestCode){
+            case GPS_LOCATION_PER:
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    updateGPS();
+                    Log.e(TAG, "fine");
+                }
+                else{
+                    Toast.makeText(this, "This application requires gps access!!", Toast.LENGTH_SHORT).show();
+                    finish();
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void updateGPS(){
+        // getting the permissions from user
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(MainActivity.this);
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
+            // user provided the permission
+            fusedLocationProviderClient.getLastLocation().addOnSuccessListener(this, new OnSuccessListener<Location>() {
+                @Override
+                public void onSuccess(Location location) {
+                    double latitude, longitude = 0;
+                    latitude = location.getLatitude();
+                    longitude = location.getLongitude();
+                    Toast.makeText(MainActivity.this, "lat: " + latitude, Toast.LENGTH_SHORT).show();
+                    //Toast.makeText(MainActivity.this, "lat: " + latitude + "lon: " + longitude, Toast.LENGTH_SHORT).show();
+                    Log.e(TAG, "lat: " + latitude);
+                }
+            });
+        }
+        else{
+            // user denied the permission
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+                requestPermissions(new String[] {Manifest.permission.ACCESS_FINE_LOCATION}, GPS_LOCATION_PER);
+            }
+        }
+
+        // getting the current location from the fused client
     }
 
     private void findViewByID(){
@@ -124,6 +203,7 @@ public class MainActivity extends AppCompatActivity {
         btnDevice = (Button) findViewById(R.id.btn_device);
         btnStart = (Button) findViewById(R.id.btn_start);
         btnFinish = (Button) findViewById(R.id.btn_finish);
+        btnGPS = (Button) findViewById(R.id.btn_gps);
         tvStatus = (TextView) findViewById(R.id.tv_status);
         tvData = (TextView) findViewById(R.id.tv_inputDataExhibition);
         lvPairedDevices = (ListView) findViewById(R.id.lv_pairedDevices);
@@ -167,15 +247,24 @@ public class MainActivity extends AppCompatActivity {
             tvStatus.setText("Connecting");
         });
 
+        btnGPS.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                updateGPS();
+            }
+        });
+
         btnStart.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 connectionFlag = true;
                 switch (rgModeSelection.getCheckedRadioButtonId()){
                     case R.id.rb_HR:
+                        selectedMode = 'h';
                         sendReceive.write("h".getBytes());
                         break;
                     case R.id.rb_SPO2:
+                        selectedMode = 's';
                         sendReceive.write("s".getBytes());
                         break;
                     default:
@@ -230,9 +319,13 @@ public class MainActivity extends AppCompatActivity {
                             }
                             series.appendData(new DataPoint(pointsPlotted, _msgInt), true, pointsPlotted);
                             viewport.setMaxX(pointsPlotted);
-                            viewport.setMaxY(200);
+                            viewport.setMaxY(300);
                             // removing the last 100 points from the chart
                             viewport.setMinX(pointsPlotted - 100);
+
+                            // checking the safe zone for HR and spo2 level
+                            check_HR_SPO2(_msgInt);
+
                             Log.e(TAG, "m_data: " + _msgInt);
                         }
                     }catch (NumberFormatException e){
@@ -390,20 +483,61 @@ public class MainActivity extends AppCompatActivity {
         return count;
     }
 
-//    public char[] pattern(String in){
-//        int pattern_end = 0;
-//        for(int i = pattern_end+1 ; i < in.length(); i++) {
-//            int pattern_dex = i % (pattern_end + 1);
-//            if (in[pattern_dex] != in[i]) {
-//                pattern_end = i;
-//                continue;
-//            }
-//            if (i == in.length - 1) {
-//                return in[0:pattern_end + 1];
-//
-//            }
-//        }
-//        return in;
-//    }
+    private void check_HR_SPO2(int data){
+        //heart rate has been selected
+        if(selectedMode == 'h') {
+            // heart rate exceeds the natural level
+            if (data > hrMAX) {
+                dangerZoneDataCnt++;
+                if (dangerZoneDataCnt < maxSampleCheck) {
+                    dangerZoneDataSum += data;
+                    dangerZoneDataCnt = 0;
+                }
+                if (dangerZoneDataSum > hrMAX * maxSampleCheck) {
+                    // todo: retrieve the LOCATION and send SMS
+
+                }
+            }
+
+            // heart rate is less than natural level minimum
+            else if (data < hrMIN) {
+                dangerZoneDataCnt++;
+                if (dangerZoneDataCnt < maxSampleCheck) {
+                    dangerZoneDataSum += data;
+                }
+                if (dangerZoneDataSum < hrMIN * maxSampleCheck) {
+                    // todo: retrieve the LOCATION and send SMS
+
+                }
+            }
+        }
+            // oxygen level has been selected
+            else if(selectedMode == 's'){
+                // oxygen level exceeds the natural level
+                if(data > spo2MAX){
+                    dangerZoneDataCnt++;
+                    if (dangerZoneDataCnt < maxSampleCheck){
+                        dangerZoneDataSum += data;
+                        dangerZoneDataCnt = 0;
+                    }
+                    if (dangerZoneDataSum > spo2MAX * maxSampleCheck){
+                        // todo: retrieve the LOCATION and send SMS
+
+                    }
+                }
+
+                // oxygen level is less than natural level minimum
+                else if(data < spo2MIN) {
+                    dangerZoneDataCnt++;
+                    if (dangerZoneDataCnt < maxSampleCheck) {
+                        dangerZoneDataSum += data;
+                    }
+                    if (dangerZoneDataSum < spo2MIN * maxSampleCheck) {
+                        // todo: retrieve the LOCATION and send SMS
+
+                    }
+                }
+        }
+    }
 
 }
