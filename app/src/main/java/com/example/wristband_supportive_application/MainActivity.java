@@ -1,8 +1,10 @@
 package com.example.wristband_supportive_application;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
@@ -11,16 +13,20 @@ import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.nfc.Tag;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Bundle;
+import android.telephony.SmsManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
@@ -39,6 +45,7 @@ import com.jjoe64.graphview.series.LineGraphSeries;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -48,10 +55,16 @@ public class MainActivity extends AppCompatActivity {
     //todo: stop the plotting when the danger zone has been entered
     private static final String TAG = "MyApp";
 
+    // SMS instance
+    SmsManager smsManager;
+    private static final int SMS_PER = 1;
+
     // handling the location services
     FusedLocationProviderClient fusedLocationProviderClient;
     // location request is a config file to work with fusedLocationProviderClient
     LocationRequest locationRequest;
+    // the last known address of the user
+    String userAddress;
 
     private static final int GPS_INTERVAL = 5000;
     private static final int GPS_LOCATION_PER = 99;
@@ -64,6 +77,7 @@ public class MainActivity extends AppCompatActivity {
     private int hrMAX = 115;
 
     Button btnListen, btnDevice, btnStart, btnFinish, btnGPS;
+    EditText etPhoneNumber;
     TextView tvStatus, tvData;
     ListView lvPairedDevices;
     RadioGroup rgModeSelection;
@@ -143,10 +157,12 @@ public class MainActivity extends AppCompatActivity {
 
         // setting the properties of LocationRequest
         locationRequest = new LocationRequest();
-        // refreshing the location every 5 seconds
+        // refreshing the location every 5 seconds if we use this app to track, which we don't.
         locationRequest.setFastestInterval(GPS_INTERVAL);
         locationRequest.setPriority(locationRequest.PRIORITY_HIGH_ACCURACY);
         //updateGPS();
+
+        smsManager = SmsManager.getDefault();
 
     } // end of onCreate method
 
@@ -171,20 +187,40 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void updateGPS(){
+    private String updateGPS(){
         // getting the permissions from user
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(MainActivity.this);
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
             // user provided the permission
             fusedLocationProviderClient.getLastLocation().addOnSuccessListener(this, new OnSuccessListener<Location>() {
+                @RequiresApi(api = Build.VERSION_CODES.M)
                 @Override
                 public void onSuccess(Location location) {
-                    double latitude, longitude = 0;
-                    latitude = location.getLatitude();
-                    longitude = location.getLongitude();
-                    Toast.makeText(MainActivity.this, "lat: " + latitude, Toast.LENGTH_SHORT).show();
-                    //Toast.makeText(MainActivity.this, "lat: " + latitude + "lon: " + longitude, Toast.LENGTH_SHORT).show();
-                    Log.e(TAG, "lat: " + latitude);
+                    // getting the actual location to send via SMS
+                    Geocoder geocoder = new Geocoder(MainActivity.this);
+                    try{
+                        List<Address> addressList = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
+                        userAddress = addressList.get(0).getAddressLine(0);
+                        //Toast.makeText(MainActivity.this, userAddress, Toast.LENGTH_LONG).show();
+
+                        // todo: remove this section and move it automatic in the dangerZoneCheck
+                        if(ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED){
+                            try{
+                                String phoneNumber = etPhoneNumber.getText().toString().trim();
+                                String messageToSend = userAddress.trim();
+                                if (!messageToSend.equals("")){
+                                    smsManager.sendTextMessage(phoneNumber, null, messageToSend, null, null);
+                                    Toast.makeText(MainActivity.this, "Message is sent", Toast.LENGTH_LONG).show();
+                                }
+                            }catch (Exception e){
+                                Toast.makeText(MainActivity.this, "Failed to send message", Toast.LENGTH_LONG).show();
+                                e.printStackTrace();
+                            }
+                        }
+                    }catch (Exception e){
+                        Toast.makeText(MainActivity.this, "Couldn't get the address!", Toast.LENGTH_SHORT).show();
+                        e.printStackTrace();
+                    }
                 }
             });
         }
@@ -194,8 +230,7 @@ public class MainActivity extends AppCompatActivity {
                 requestPermissions(new String[] {Manifest.permission.ACCESS_FINE_LOCATION}, GPS_LOCATION_PER);
             }
         }
-
-        // getting the current location from the fused client
+        return userAddress;
     }
 
     private void findViewByID(){
@@ -210,6 +245,7 @@ public class MainActivity extends AppCompatActivity {
         rgModeSelection = (RadioGroup) findViewById(R.id.rg_modeSelection);
         rbHR = (RadioButton) findViewById(R.id.rb_HR);
         rbSPO2 = (RadioButton) findViewById(R.id.rb_SPO2);
+        etPhoneNumber = (EditText) findViewById(R.id.et_phoneNumber);
     }
 
     private void implementListeners(){
@@ -495,7 +531,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 if (dangerZoneDataSum > hrMAX * maxSampleCheck) {
                     // todo: retrieve the LOCATION and send SMS
-
+                    //updateGPS();
                 }
             }
 
@@ -507,7 +543,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 if (dangerZoneDataSum < hrMIN * maxSampleCheck) {
                     // todo: retrieve the LOCATION and send SMS
-
+                    //updateGPS();
                 }
             }
         }
@@ -522,7 +558,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                     if (dangerZoneDataSum > spo2MAX * maxSampleCheck){
                         // todo: retrieve the LOCATION and send SMS
-
+                        //updateGPS();
                     }
                 }
 
@@ -534,7 +570,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                     if (dangerZoneDataSum < spo2MIN * maxSampleCheck) {
                         // todo: retrieve the LOCATION and send SMS
-
+                        //updateGPS();
                     }
                 }
         }
