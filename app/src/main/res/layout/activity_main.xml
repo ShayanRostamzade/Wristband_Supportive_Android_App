@@ -6,7 +6,8 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:gravity="center_horizontal"
-    tools:context=".MainActivity">
+    tools:context=".MainActivity"
+    android:background="@color/gray_2">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -16,65 +17,118 @@
 
         <Button
             android:id="@+id/btn_gps"
-            android:layout_width="70dp"
+            android:layout_width="110dp"
             android:layout_height="wrap_content"
-            android:text="gps"
-            android:layout_margin="7dp"/>
+            android:layout_margin="7dp"
+            android:backgroundTint="@color/gray_3"
+            android:textColor="@color/white"
+            android:text="gps" />
 
-        <Button
+        <!-- <Button
             android:id="@+id/btn_listen"
-            android:layout_width="90dp"
+            android:layout_width="110dp"
             android:layout_height="wrap_content"
             android:text="Listen"
-            android:layout_margin="7dp"/>
+            android:layout_margin="7dp"
+            android:textColor="@color/white"
+            android:backgroundTint="@color/gray_3"/> -->
 
         <Button
             android:id="@+id/btn_device"
-            android:layout_width="90dp"
+            android:layout_width="110dp"
             android:layout_height="wrap_content"
             android:text="device"
-            android:layout_margin="7dp"/>
+            android:layout_margin="7dp"
+            android:textColor="@color/white"
+            android:backgroundTint="@color/gray_3"/>
 
         <TextView
             android:id="@+id/tv_status"
-            android:layout_width="70dp"
+            android:layout_width="100dp"
             android:layout_height="30dp"
             android:text="Status"
             android:padding="5dp"
             android:gravity="center"
             android:textStyle="bold"
+            android:textColor="@color/white"
             android:textSize="14sp"
-            android:layout_margin="7dp"/>
+            android:layout_margin="3dp"/>
 
     </LinearLayout>
 
-    <ListView
-        android:id="@+id/lv_pairedDevices"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="130dp"
-        android:background="@color/white"/>
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:orientation="horizontal"
+        android:padding="7dp">
+
+        <TextView
+            android:id="@+id/tv_bluetoothDevice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Choose the device:"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="@color/gray_4"
+            android:layout_margin="10dp"
+            android:paddingVertical="5dp"/>
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_action_name" />
+
+        <Spinner
+            android:id="@+id/sp_devices"
+            android:layout_width="150dp"
+            android:layout_height="50dp"
+            android:layout_margin="7dp"
+            android:background="@color/gray_1"
+            android:gravity="right"/>
+
+
+    </LinearLayout>
+
+ <LinearLayout
+     android:layout_width="match_parent"
+     android:layout_height="wrap_content"
+     android:orientation="horizontal"
+     android:gravity="center_horizontal">
+
+     <!-- <ListView
+         android:id="@+id/lv_pairedDevices"
+         android:layout_width="150dp"
+         android:layout_height="130dp"
+         android:background="@color/white"
+         android:layout_gravity="left"/> -->
+
+ </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="left">
+        android:gravity="left"
+        android:padding="7dp">
 
         <EditText
             android:id="@+id/et_phoneNumber"
             android:layout_width="250dp"
             android:layout_height="50dp"
             android:hint="Enter the phone number"
+            android:textColorHint="@color/gray_1"
             android:textSize="15sp"
             android:layout_marginHorizontal="18dp"/>
 
         <TextView
             android:id="@+id/tv_inputDataExhibition"
             android:layout_width="109dp"
-            android:layout_height="90dp"
+            android:layout_height="match_parent"
             android:gravity="center"
             android:text="test"
-            android:textColor="@color/teal_200"
+            android:textColor="@color/gray_4"
             android:textSize="20sp"
             android:textStyle="bold" />
 
@@ -83,8 +137,8 @@
     <com.jjoe64.graphview.GraphView
         android:id="@+id/graph"
         android:layout_width="match_parent"
-        android:layout_height="260dp"
-        android:layout_margin="5dp"/>
+        android:layout_height="339dp"
+        android:layout_margin="5dp" />
 
     <RadioGroup
         android:id="@+id/rg_modeSelection"
@@ -120,7 +174,8 @@
             android:id="@+id/btn_finish"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="finish"
+            android:text="stop"
+            android:backgroundTint="@color/gray_3"
             android:layout_margin="7dp"/>
 
         <Button
@@ -128,7 +183,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="start"
-            android:layout_margin="7dp"/>
+            android:layout_margin="7dp"
+            android:backgroundTint="@color/gray_3"/>
 
     </LinearLayout>
 

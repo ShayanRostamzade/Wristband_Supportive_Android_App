@@ -13,6 +13,7 @@ import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -24,12 +25,14 @@ import android.os.Bundle;
 import android.telephony.SmsManager;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -49,7 +52,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
 
     //todo: change the UI
     //todo: stop the plotting when the danger zone has been entered
@@ -78,8 +81,9 @@ public class MainActivity extends AppCompatActivity {
 
     Button btnListen, btnDevice, btnStart, btnFinish, btnGPS;
     EditText etPhoneNumber;
-    TextView tvStatus, tvData;
-    ListView lvPairedDevices;
+    TextView tvStatus, tvData, tvBluetoothDevice;
+    //ListView lvPairedDevices;
+    Spinner spDevices;
     RadioGroup rgModeSelection;
     RadioButton rbHR, rbSPO2;
 
@@ -100,15 +104,15 @@ public class MainActivity extends AppCompatActivity {
     int dangerZoneDataCnt = 0;
 
     static final int STATE_LISTENING = 1;
-    static final int STATE_CONNECTING=2;
-    static final int STATE_CONNECTED=3;
-    static final int STATE_CONNECTION_FAILED=4;
-    static final int STATE_MESSAGE_RECEIVED=5;
+    static final int STATE_CONNECTING = 2;
+    static final int STATE_CONNECTED = 3;
+    static final int STATE_CONNECTION_FAILED = 4;
+    static final int STATE_MESSAGE_RECEIVED = 5;
 
     int REQUEST_ENABLE_BLUETOOTH=1;
 
     private static final String APP_NAME = "Wristband_Supportive_Application";
-    private static final UUID MY_UUID=UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+    private static final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
     /*
     Graph property section
@@ -145,6 +149,7 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
+        spDevices.setOnItemSelectedListener(this);
         implementListeners();
 
         // Sample graph code
@@ -154,6 +159,7 @@ public class MainActivity extends AppCompatActivity {
         viewport.setXAxisBoundsManual(true);
         viewport.setYAxisBoundsManual(true);
         graph.addSeries(series);
+        series.setColor(Color.BLACK);
 
         // setting the properties of LocationRequest
         locationRequest = new LocationRequest();
@@ -234,21 +240,24 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void findViewByID(){
-        btnListen = (Button) findViewById(R.id.btn_listen);
+        //btnListen = (Button) findViewById(R.id.btn_listen);
         btnDevice = (Button) findViewById(R.id.btn_device);
         btnStart = (Button) findViewById(R.id.btn_start);
         btnFinish = (Button) findViewById(R.id.btn_finish);
         btnGPS = (Button) findViewById(R.id.btn_gps);
         tvStatus = (TextView) findViewById(R.id.tv_status);
         tvData = (TextView) findViewById(R.id.tv_inputDataExhibition);
-        lvPairedDevices = (ListView) findViewById(R.id.lv_pairedDevices);
+        tvBluetoothDevice = (TextView) findViewById(R.id.tv_bluetoothDevice);
+        //lvPairedDevices = (ListView) findViewById(R.id.lv_pairedDevices);
         rgModeSelection = (RadioGroup) findViewById(R.id.rg_modeSelection);
         rbHR = (RadioButton) findViewById(R.id.rb_HR);
         rbSPO2 = (RadioButton) findViewById(R.id.rb_SPO2);
         etPhoneNumber = (EditText) findViewById(R.id.et_phoneNumber);
+        spDevices = (Spinner) findViewById(R.id.sp_devices);
     }
 
     private void implementListeners(){
+
         btnDevice.setOnClickListener(view -> {
             Set<BluetoothDevice> bt = bluetoothAdapter.getBondedDevices();
             String[] strings = new String[bt.size()];
@@ -264,24 +273,27 @@ public class MainActivity extends AppCompatActivity {
                     index++;
                 }
                 ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(getApplicationContext(),android.R.layout.simple_list_item_1,strings);
-                lvPairedDevices.setAdapter(arrayAdapter);
+                //lvPairedDevices.setAdapter(arrayAdapter);
+                arrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                spDevices.setAdapter(arrayAdapter);
             }
         });
 
-        btnListen.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                ServerClass serverClass = new ServerClass();
-                serverClass.start();
-            }
-        });
+//        btnListen.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                ServerClass serverClass = new ServerClass();
+//                serverClass.start();
+//            }
+//        });
 
-        lvPairedDevices.setOnItemClickListener((adapterView, view, i, l) -> {
-            ClientClass clientClass = new ClientClass(btArray[i]);
-            clientClass.start();
+//        lvPairedDevices.setOnItemClickListener((adapterView, view, i, l) -> {
+//            ClientClass clientClass = new ClientClass(btArray[i]);
+//            clientClass.start();
+//
+//            tvStatus.setText("Connecting");
+//        });
 
-            tvStatus.setText("Connecting");
-        });
 
         btnGPS.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -317,6 +329,21 @@ public class MainActivity extends AppCompatActivity {
                 connectionFlag = false;
             }
         });
+
+    } // end of implementListeners
+
+    // The spinner must have methods to work with
+    @Override
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        ClientClass clientClass = new ClientClass(btArray[position]);
+        clientClass.start();
+        Toast.makeText(MainActivity.this, "clicked on adapterview", Toast.LENGTH_SHORT).show();
+        tvStatus.setText("Connecting");
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> parent) {
+
     }
 
     Handler handler = new Handler(new Handler.Callback() {
@@ -372,6 +399,7 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
     });
+
 
     private class ServerClass extends Thread
     {
