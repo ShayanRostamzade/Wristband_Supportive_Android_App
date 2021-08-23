@@ -99,7 +99,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     char selectedMode = 'h';
 
     // the number of samples to gather when user enters the perilous zone
-    int maxSampleCheck = 20;
+    int maxSampleCheck = 50;
     int dangerZoneDataSum = 0;
     int dangerZoneDataCnt = 0;
 
@@ -555,11 +555,10 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 dangerZoneDataCnt++;
                 if (dangerZoneDataCnt < maxSampleCheck) {
                     dangerZoneDataSum += data;
-                    dangerZoneDataCnt = 0;
                 }
                 if (dangerZoneDataSum > hrMAX * maxSampleCheck) {
-                    // todo: retrieve the LOCATION and send SMS
-                    //updateGPS();
+                    // retrieve the LOCATION and send SMS
+                    updateGPS();
                 }
             }
 
@@ -570,9 +569,12 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                     dangerZoneDataSum += data;
                 }
                 if (dangerZoneDataSum < hrMIN * maxSampleCheck) {
-                    // todo: retrieve the LOCATION and send SMS
-                    //updateGPS();
+                    // retrieve the LOCATION and send SMS
+                    updateGPS();
                 }
+            }
+            else{
+                dangerZoneDataCnt = 0;
             }
         }
             // oxygen level has been selected
@@ -582,11 +584,10 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                     dangerZoneDataCnt++;
                     if (dangerZoneDataCnt < maxSampleCheck){
                         dangerZoneDataSum += data;
-                        dangerZoneDataCnt = 0;
                     }
                     if (dangerZoneDataSum > spo2MAX * maxSampleCheck){
-                        // todo: retrieve the LOCATION and send SMS
-                        //updateGPS();
+                        // retrieve the LOCATION and send SMS
+                        updateGPS();
                     }
                 }
 
@@ -597,9 +598,12 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                         dangerZoneDataSum += data;
                     }
                     if (dangerZoneDataSum < spo2MIN * maxSampleCheck) {
-                        // todo: retrieve the LOCATION and send SMS
-                        //updateGPS();
+                        // retrieve the LOCATION and send SMS
+                        updateGPS();
                     }
+                }
+                else{
+                    dangerZoneDataCnt = 0;
                 }
         }
     }
